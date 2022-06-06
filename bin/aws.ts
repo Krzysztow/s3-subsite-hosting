@@ -1,21 +1,28 @@
 #!/usr/bin/env node
+import assert = require('assert');
+import fs = require("fs");
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { AwsStack } from '../lib/aws-stack';
+import { SubsiteDeployments } from '../lib/subsite-deployments';
+import { Stack } from 'aws-cdk-lib';
+import { Source } from 'aws-cdk-lib/aws-s3-deployment';
+
+const INDEX_DOC = "index.html";
 
 const app = new cdk.App();
-new AwsStack(app, 'AwsStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+const subsiteDeploymentStack = new Stack(app, "SubsiteDeploymentsStack");
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+const prefixInput = subsiteDeploymentStack.node.tryGetContext("subsite-prefix");
+const sourceDir = subsiteDeploymentStack.node.tryGetContext("subsite-dir-source");
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+assert(prefixInput?.length > 0, "The prefix needs to be specified: 'subsite-prefix'");
+assert(sourceDir?.length > 0, "The source directory needs to be specified: 'subsite-dir-source'");
+
+new SubsiteDeployments(subsiteDeploymentStack, 'SubsitesDeployments', {
+  indexDocument: INDEX_DOC,
+  // Prefix to the subsite within the bucket
+  prefix: prefixInput,
+  // Subsite directory source to be uploaded
+  sources: [Source.asset(sourceDir)]
 });

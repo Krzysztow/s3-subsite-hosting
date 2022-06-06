@@ -1,5 +1,4 @@
-import assert = require('assert');
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
@@ -17,17 +16,18 @@ export class SubsiteDeployments extends Construct {
   constructor(scope: Construct, id: string, props: SubsiteDeploymentsProps) {
     super(scope, id);
 
-
     this.bucket = new s3.Bucket(this, 'SubsiteDeploymentBucket', {
       websiteIndexDocument: props.indexDocument,
       publicReadAccess: true,
-      enforceSSL: true,
+      // removalPolicy: RemovalPolicy.DESTROY,
+      // autoDeleteObjects: true
     });
 
-    new s3deploy.BucketDeployment(this, 'SubsiteDeployment', {
+    const deployment = new s3deploy.BucketDeployment(this, 'SubsiteDeployment', {
       sources: props.sources,
       destinationBucket: this.bucket,
-      destinationKeyPrefix: props.prefix, // optional prefix in destination bucket
+      // destinationKeyPrefix: props.prefix, // optional prefix in destination bucket
     });
+
   }
 }
