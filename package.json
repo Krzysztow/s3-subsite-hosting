@@ -1,8 +1,8 @@
 {
-  "name": "aws",
+  "name": "s3-subsite-hosting",
   "version": "0.1.0",
   "bin": {
-    "aws": "bin/aws.js"
+    "aws": "bin/s3-subsite-hosting.js"
   },
   "scripts": {
     "build": "tsc",

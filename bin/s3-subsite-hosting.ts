@@ -1,6 +1,4 @@
 #!/usr/bin/env node
-import assert = require('assert');
-import fs = require("fs");
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { SubsiteDeployments } from '../lib/subsite-deployments';
