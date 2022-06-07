@@ -19,8 +19,8 @@ export class SubsiteDeployments extends Construct {
     this.bucket = new s3.Bucket(this, "SubsiteDeploymentBucket", {
       websiteIndexDocument: props.indexDocument,
       publicReadAccess: true,
-      // removalPolicy: RemovalPolicy.DESTROY,
-      // autoDeleteObjects: true
+      removalPolicy: RemovalPolicy.DESTROY, //TODO: depending on the environment
+      autoDeleteObjects: true, //TODO: depending on the environment
     });
 
     const deployment = new s3deploy.BucketDeployment(
@@ -29,7 +29,7 @@ export class SubsiteDeployments extends Construct {
       {
         sources: props.sources,
         destinationBucket: this.bucket,
-        // destinationKeyPrefix: props.prefix, // optional prefix in destination bucket
+        destinationKeyPrefix: props.prefix, // optional prefix in destination bucket
       }
     );
   }

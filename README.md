@@ -12,3 +12,16 @@ The `cdk.json` file tells the CDK Toolkit how to execute your app.
 * `cdk deploy`      deploy this stack to your default AWS account/region
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
+
+## Running of the stack
+
+Atm it requires following contextual parameters:
+* `subsite-prefix`      - name of the prefix the static subpage should be put to (cannot be empty!)
+* `subsite-dir-source`  - directory of the subpage to be deployed under the `subsite-prefix`
+
+Example:
+
+```sh
+cdk deploy -c subsite-prefix=test-a -c subsite-dir-source=./test-1
+cdk deploy -c subsite-prefix=test-b -c subsite-dir-source=./test-2
+```
