@@ -63,6 +63,7 @@ export class SubsiteDeployments extends Construct {
         logRetention: RetentionDays.ONE_DAY,
         environment: {
           BUCKET_NAME: this.bucket.bucketName,
+          BUCKET_BASE_URL: this.bucket.urlForObject(),
         },
         bundling: {
           nodeModules: [
@@ -74,6 +75,7 @@ export class SubsiteDeployments extends Construct {
 
     this.bucket.grantReadWrite(updateIndexLambda);
 
+    new CfnOutput(this, "bucket-name", { value: this.bucket.bucketName });
     new CfnOutput(this, "bucket-url", { value: this.bucket.urlForObject() });
   }
 }

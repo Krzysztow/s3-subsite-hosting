@@ -25,3 +25,7 @@ Example:
 cdk deploy -c subsite-prefix=test-a -c subsite-dir-source=./test-1
 cdk deploy -c subsite-prefix=test-b -c subsite-dir-source=./test-2
 ```
+
+## Running lambda:
+* synthesize new stack changes `cdk synth --no-staging -c subsite-prefix=test-a -c subsite-dir-source=./test`
+* invoke lambda locally (all env variables are configured thanks to the above synth) `sam local invoke CreateIndexFileLambda -t ./cdk.out/SubsiteDeploymentsStack.template.json`
