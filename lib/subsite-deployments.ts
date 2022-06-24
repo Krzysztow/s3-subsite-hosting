@@ -1,10 +1,13 @@
 import {
   CfnOutput,
   Duration,
+  Expiration,
   lambda_layer_awscli,
   RemovalPolicy,
   Stack,
   StackProps,
+  Tag,
+  Tags,
 } from "aws-cdk-lib";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
@@ -15,7 +18,9 @@ import * as path from "path";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
-const INDEX_DOC = "index.html";
+export const INDEX_DOC = "index.html";
+export const SUBSITE_PREFIX = "subsites";
+export const SUBSITE_DELIMITER = "/";
 interface SubsiteDeploymentsProps {
   sources: [s3deploy.ISource];
   prefix: string;
@@ -33,10 +38,9 @@ export class SubsiteDeployments extends Construct {
       removalPolicy: RemovalPolicy.DESTROY, //TODO: depending on the environment
       autoDeleteObjects: true, //TODO: depending on the environment
       lifecycleRules: [
-        //TODO: depending on environment - we don't want that for a production
         {
-          prefix: `!${INDEX_DOC}`, //TODO: verify if that even works - this is prefix, I used file name instead
-          expiration: Duration.days(1),
+          expiration: Duration.days(1), //TODO: we don't want to expire in production
+          prefix: SUBSITE_PREFIX,
         },
       ],
     });
@@ -47,7 +51,7 @@ export class SubsiteDeployments extends Construct {
       {
         sources: props.sources,
         destinationBucket: this.bucket,
-        destinationKeyPrefix: props.prefix, // optional prefix in destination bucket
+        destinationKeyPrefix: `${SUBSITE_PREFIX}${SUBSITE_DELIMITER}${props.prefix}`,
       }
     );
 
@@ -66,9 +70,7 @@ export class SubsiteDeployments extends Construct {
           BUCKET_BASE_URL: this.bucket.urlForObject(),
         },
         bundling: {
-          nodeModules: [
-            '@aws-sdk/client-s3',
-          ],
+          nodeModules: ["@aws-sdk/client-s3"],
         },
       }
     );

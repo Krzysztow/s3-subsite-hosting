@@ -8,12 +8,15 @@ import {
   S3ObjectDeletedNotificationEvent,
   S3ObjectCreatedNotificationEvent,
 } from "aws-lambda";
+import {
+  SUBSITE_DELIMITER,
+  SUBSITE_PREFIX,
+  INDEX_DOC,
+} from "../subsite-deployments";
 
 console.log("Loading function");
 
 const s3 = new S3Client({ apiVersion: "2006-03-01" });
-
-const INDEX_PAGE = "index.html";
 
 export const handler = async (
   event: S3ObjectCreatedNotificationEvent | S3ObjectDeletedNotificationEvent,
@@ -21,7 +24,7 @@ export const handler = async (
 ) => {
   console.log("Received event:", JSON.stringify(event, null, 2));
 
-  if (event?.detail?.object?.key === INDEX_PAGE) {
+  if (event?.detail?.object?.key === INDEX_DOC) {
     console.warn("Got event for the index.html, but should NOT!");
     return "Skipped geneartion";
   }
@@ -31,15 +34,13 @@ export const handler = async (
 
   try {
     const prefixes = await getBucketPrefixes(bucketName);
-    console.log(`Prefixes: ${prefixes}`);
+    console.log(`Prefixes: ${JSON.stringify(prefixes)}`);
 
     const data = generateIndexData(bucketBaseUrl, prefixes);
     console.log(data);
 
-    uploadIndexData(bucketName, data);
-    console.log(
-      `Finished regeneartion of ${bucketBaseUrl + "/" + INDEX_PAGE}!`
-    );
+    await uploadIndexData(bucketName, data);
+    console.log(`Finished regeneartion of ${bucketBaseUrl + "/" + INDEX_DOC}!`);
   } catch (e) {
     throw e;
   }
@@ -57,21 +58,35 @@ const getRequiredEnv = (name: string): string => {
   return value;
 };
 
-const getBucketPrefixes = async (bucketName: string): Promise<string[]> => {
+interface PrefixesData {
+  name: string;
+  path: string;
+}
+
+const getBucketPrefixes = async (
+  bucketName: string
+): Promise<PrefixesData[]> => {
+  const susbiteWithDelimiter = SUBSITE_PREFIX + SUBSITE_DELIMITER;
   const objects: ListObjectsV2CommandOutput = await s3.send(
     new ListObjectsV2Command({
       Bucket: bucketName,
-      Delimiter: "/",
+      Prefix: susbiteWithDelimiter,
+      Delimiter: SUBSITE_DELIMITER,
     })
   );
 
   const prefixes = (objects.CommonPrefixes ?? [])
     .map((p) => p?.Prefix)
     .filter((p) => undefined !== p) as string[];
-  return prefixes;
+  return prefixes.map((p) => {
+    return { name: p.substring(susbiteWithDelimiter.length), path: p };
+  });
 };
 
-const generateIndexData = (baseUrl: string, prefixes: string[]): string => {
+const generateIndexData = (
+  baseUrl: string,
+  prefixes: PrefixesData[]
+): string => {
   return `
       <!doctype html>
       <html>
@@ -83,7 +98,8 @@ const generateIndexData = (baseUrl: string, prefixes: string[]): string => {
           <ul id="links">
             ${prefixes
               ?.map(
-                (p) => `<li><a href="${baseUrl}/${p}index.html">${p}</a></li>`
+                (p) =>
+                  `<li><a href="${baseUrl}/${p.path}index.html">${p.name}</a></li>`
               )
               .join("\n")}
           </ul>
@@ -93,10 +109,10 @@ const generateIndexData = (baseUrl: string, prefixes: string[]): string => {
 };
 
 const uploadIndexData = async (bucketName: string, data: string) => {
-  const putResult = await s3.send(
+  await s3.send(
     new PutObjectCommand({
       Bucket: bucketName,
-      Key: INDEX_PAGE,
+      Key: INDEX_DOC,
       Body: data,
       ContentType: "text/html",
     })
