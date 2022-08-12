@@ -12,6 +12,7 @@ import {
   SUBSITE_DELIMITER,
   SUBSITE_PREFIX,
   INDEX_DOC,
+  SUBSITE_DIR,
 } from "../subsite-deployments";
 
 console.log("Loading function");
@@ -66,11 +67,10 @@ interface PrefixesData {
 const getBucketPrefixes = async (
   bucketName: string
 ): Promise<PrefixesData[]> => {
-  const susbiteWithDelimiter = SUBSITE_PREFIX + SUBSITE_DELIMITER;
   const objects: ListObjectsV2CommandOutput = await s3.send(
     new ListObjectsV2Command({
       Bucket: bucketName,
-      Prefix: susbiteWithDelimiter,
+      Prefix: SUBSITE_DIR,
       Delimiter: SUBSITE_DELIMITER,
     })
   );
@@ -79,7 +79,7 @@ const getBucketPrefixes = async (
     .map((p) => p?.Prefix)
     .filter((p) => undefined !== p) as string[];
   return prefixes.map((p) => {
-    return { name: p.substring(susbiteWithDelimiter.length), path: p };
+    return { name: p.substring(SUBSITE_DIR.length), path: p };
   });
 };
 
